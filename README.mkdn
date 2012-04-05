@@ -1,43 +1,8 @@
-package Catalyst::Plugin::EnableMiddleware;
-
-use Moose::Role;
-use namespace::autoclean;
-use Plack::Util;
-use Scalar::Util;
-
-our $VERSION = '0.001';
-
-around 'psgi_app', sub {
-  my ($orig, $self, @args) = @_;
-  my @mw = @{$self->config->{'Plugin::EnableMiddleware'}||[]};
-  my $psgi_app = $self->$orig(@args);
-  while(my $next = shift(@mw)) {
-    if(Scalar::Util::blessed $next && $next->can('wrap')) {
-      $psgi_app = $next->wrap($psgi_app);
-    } elsif(my $type = ref $next) {
-      if($type eq 'CODE') {
-        $psgi_app = $next->($psgi_app);
-      }
-    } else {
-      my $normalized_next = Plack::Util::load_class($next, 'Plack::Middleware');
-      if($mw[0] and ref($mw[0]) and(ref $mw[0] eq 'HASH')) {
-        my $args = shift @mw;
-        $psgi_app = $normalized_next->wrap($psgi_app, %$args);
-      } else {
-        $psgi_app = $normalized_next->wrap($psgi_app);
-      }
-    }
-  }
-  return $psgi_app;
-};
-
-1;
-
-=head1 NAME
+# NAME
 
 Catalyst::Plugin::EnableMiddleware - Enable Plack Middleware via Configuration
 
-=head1 SYNOPSIS
+# SYNOPSIS
 
     package MyApp::Web;
 
@@ -71,20 +36,20 @@ Catalyst::Plugin::EnableMiddleware - Enable Plack Middleware via Configuration
     __PACKAGE__->setup;
     __PACKAGE__->meta->make_immutable;
 
-=head1 DESCRIPTION
+# DESCRIPTION
 
-Modern versions of L<Catalyst> use L<Plack> as the underlying engine to
+Modern versions of [Catalyst](http://search.cpan.org/perldoc?Catalyst) use [Plack](http://search.cpan.org/perldoc?Plack) as the underlying engine to
 connect your application to an http server.  This means that you can take
-advantage of the full L<Plack> software ecosystem to grow your application
+advantage of the full [Plack](http://search.cpan.org/perldoc?Plack) software ecosystem to grow your application
 and to better componentize and re-use your code.
 
-Middleware is a large part of this ecosystem.  L<Plack::Middleware> wraps your
+Middleware is a large part of this ecosystem.  [Plack::Middleware](http://search.cpan.org/perldoc?Plack::Middleware) wraps your
 PSGI application with additional functionality, such as adding Sessions ( as in
-L<Plack::Middleware::Session>), Debugging (as in L<Plack::Middleware::Debug>)
-and logging (as in L<Plack::Middleware::LogDispatch> or
-L<Plack::Middleware::Log4Perl>).
+[Plack::Middleware::Session](http://search.cpan.org/perldoc?Plack::Middleware::Session)), Debugging (as in [Plack::Middleware::Debug](http://search.cpan.org/perldoc?Plack::Middleware::Debug))
+and logging (as in [Plack::Middleware::LogDispatch](http://search.cpan.org/perldoc?Plack::Middleware::LogDispatch) or
+[Plack::Middleware::Log4Perl](http://search.cpan.org/perldoc?Plack::Middleware::Log4Perl)).
 
-Generally you can enable middleware in your C<psgi> file, as in the following
+Generally you can enable middleware in your `psgi` file, as in the following
 example
 
     #!/usr/bin/env plackup
@@ -104,14 +69,14 @@ example
 
     };
 
-Here we are using our C<psgi> file and some tools that come L<Plack> in order
-to enable L<Plack::Middleware::Debug> and L<Plack::Middleware::Session>.  This
-is a nice, clean approach that cleanly separates your L<Catalyst> application
+Here we are using our `psgi` file and some tools that come [Plack](http://search.cpan.org/perldoc?Plack) in order
+to enable [Plack::Middleware::Debug](http://search.cpan.org/perldoc?Plack::Middleware::Debug) and [Plack::Middleware::Session](http://search.cpan.org/perldoc?Plack::Middleware::Session).  This
+is a nice, clean approach that cleanly separates your [Catalyst](http://search.cpan.org/perldoc?Catalyst) application
 from enabled middleware.
 
-However there may be cases when you'd rather enable middleware via you L<Catalyst>
+However there may be cases when you'd rather enable middleware via you [Catalyst](http://search.cpan.org/perldoc?Catalyst)
 application, rather in a stand alone file.  For example
-This plugin lets you mount L<Plack> applications via configuration. For example,
+This plugin lets you mount [Plack](http://search.cpan.org/perldoc?Plack) applications via configuration. For example,
 the above mapping could be re-written as follows:
 
     package MyApp::Web;
@@ -131,7 +96,7 @@ the above mapping could be re-written as follows:
     __PACKAGE__->setup;
     __PACKAGE__->meta->make_immutable;
 
-Then your C<myapp_web.psgi> would simply become:
+Then your `myapp_web.psgi` would simply become:
 
     #!/usr/bin/env plackup
 
@@ -152,18 +117,18 @@ environments (one of the key reasons to take this approach).
 The approach isn't 'either/or' and merits to each are apparent.  Choosing one
 doesn't preclude the other.
 
-We use L<Plack::App::URLMap> under the hood to perform this work.
+We use [Plack::App::URLMap](http://search.cpan.org/perldoc?Plack::App::URLMap) under the hood to perform this work.
 
-=head1 CONFIGURATION
+# CONFIGURATION
 
 Configuration for this plugin should be a hashref under the top level key
-C<Plugin::URLMap>, as in the following:
+`Plugin::URLMap`, as in the following:
 
     __PACKAGE__->config(
       'Plugin::URLMap', \%maps);
 
-Where C<\%maps> has keys that refer to URL paths off your application root
-(which is usually '/', but might be some other path if your L<Catalyst>
+Where `\%maps` has keys that refer to URL paths off your application root
+(which is usually '/', but might be some other path if your [Catalyst](http://search.cpan.org/perldoc?Catalyst)
 application itself is mounted into another application) and has values that are
 either another hashref or a plain scalar.  In other words:
 
@@ -173,14 +138,14 @@ either another hashref or a plain scalar.  In other words:
         '/path2 => { $name_of_plack_app => \%init_args },
       });
 
-Where C<$name_of_plack_app> is a scalar referring to the package name of your
-L<Plack> class (basically any class that is initialized with C<new> and has 
-a method called either C<to_app> or C<psgi_app>, which must return a subref
-that conforms to the PSGI specification) and where C<%init_args> are key - value
-arguments passed to C<new> at initialization time.
+Where `$name_of_plack_app` is a scalar referring to the package name of your
+[Plack](http://search.cpan.org/perldoc?Plack) class (basically any class that is initialized with `new` and has 
+a method called either `to_app` or `psgi_app`, which must return a subref
+that conforms to the PSGI specification) and where `%init_args` are key - value
+arguments passed to `new` at initialization time.
 
-C<$name_of_plack_app> is loaded using the same technique as L<Plack::Builder>,
-so if your application is under the L<Plack::App> namespace you can drop that
+`$name_of_plack_app` is loaded using the same technique as [Plack::Builder](http://search.cpan.org/perldoc?Plack::Builder),
+so if your application is under the [Plack::App](http://search.cpan.org/perldoc?Plack::App) namespace you can drop that
 prefix.  The following two configurations are essentially the same:
 
     __PACKAGE__->config(
@@ -196,8 +161,9 @@ prefix.  The following two configurations are essentially the same:
       });
 
 
+
 This means if you want to map an application under a different namespace, you
-will need (as in L<Plack::Builder>) to prefix C<$name_of_plack_app> with a C<+>
+will need (as in [Plack::Builder](http://search.cpan.org/perldoc?Plack::Builder)) to prefix `$name_of_plack_app` with a `+`
 as in the above and following example:
 
     __PACKAGE__->config(
@@ -206,14 +172,14 @@ as in the above and following example:
       });
 
 I believe this is well optimized for the most common cases, and it also is
-consistent with how L<Catalyst> plugins are loaded, so hopefully it will be
+consistent with how [Catalyst](http://search.cpan.org/perldoc?Catalyst) plugins are loaded, so hopefully it will be
 a reasonable convention.
 
-=head2 Deep URL Path Mapping
+## Deep URL Path Mapping
 
 There may be times when you wish to map urls more than one path level from the
-root.  For example you might wish to map the url C<http://myapp.com/one/two/>
-from an application other than your main L<Catalyst> application.  Here's how
+root.  For example you might wish to map the url `http://myapp.com/one/two/`
+from an application other than your main [Catalyst](http://search.cpan.org/perldoc?Catalyst) application.  Here's how
 you would do that:
 
     __PACKAGE__->config(
@@ -223,13 +189,13 @@ you would do that:
         },
       });
 
-Basically if your C<$name_of_plack_app> starts with a C</> we assume you are
+Basically if your `$name_of_plack_app` starts with a `/` we assume you are
 creating some sub-mappings and proceed like that.  You can add as many levels
 of submappings as you wish.
 
-=head2 Mapping Pre-Initialized Plack Applications
+## Mapping Pre-Initialized Plack Applications
 
-In some cases you may wish to map an already initialized L<Plack> application
+In some cases you may wish to map an already initialized [Plack](http://search.cpan.org/perldoc?Plack) application
 to a given URL mount.  You may do so by simply passing the instance as the
 value of the URL mount string key:
 
@@ -242,13 +208,13 @@ value of the URL mount string key:
         '/static' => $static,
       });
 
-In this case, your object (such as C<$static>) should support a method called
-C<to_app> or C<psgi_app>.
+In this case, your object (such as `$static`) should support a method called
+`to_app` or `psgi_app`.
 
-=head2 Mapping a subroutine reference
+## Mapping a subroutine reference
 
 Similarly to mapping a pre-initialized object, you can map a subroutine
-reference.  This subroutine reference should conform to the L<PSGI>
+reference.  This subroutine reference should conform to the [PSGI](http://search.cpan.org/perldoc?PSGI)
 specification:
 
     __PACKAGE__->config(
@@ -261,24 +227,22 @@ specification:
         },
       });
 
-=head2 URL Mapping '/'
+## URL Mapping '/'
 
-The '/' mount mapping is reserved for your L<Catalyst> Application.  Trying to
+The '/' mount mapping is reserved for your [Catalyst](http://search.cpan.org/perldoc?Catalyst) Application.  Trying to
 map this path will result in an error.
 
-=head1 AUTHOR
+# AUTHOR
 
-John Napiorkowski L<email:jjnapiork@cpan.org>
+John Napiorkowski [email:jjnapiork@cpan.org](email:jjnapiork@cpan.org)
 
-=head1 SEE ALSO
+# SEE ALSO
 
-L<Plack>, L<Plack::App::URLMap>, L<Catalyst>
+[Plack](http://search.cpan.org/perldoc?Plack), [Plack::App::URLMap](http://search.cpan.org/perldoc?Plack::App::URLMap), [Catalyst](http://search.cpan.org/perldoc?Catalyst)
 
-=head1 COPYRIGHT & LICENSE
+# COPYRIGHT & LICENSE
 
-Copyright 2012, John Napiorkowski L<email:jjnapiork@cpan.org>
+Copyright 2012, John Napiorkowski [email:jjnapiork@cpan.org](email:jjnapiork@cpan.org)
 
 This library is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
-
-=cut
