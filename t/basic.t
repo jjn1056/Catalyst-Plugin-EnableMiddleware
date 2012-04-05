@@ -41,4 +41,11 @@ ok my($res, $c) = ctx_request('/');
     'expected content body';
 }
 
+{
+  ok my $response = request GET $c->uri_for('/forced'),
+    'got welcome from a catalyst controller';
+
+  like $response->content, qr'forced message',
+    'expected content body';
+}
 done_testing;

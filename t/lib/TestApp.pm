@@ -2,6 +2,7 @@ package TestApp;
 
 use Moose;
 use Plack::Middleware::Static;
+use Plack::App::File;
 use Catalyst qw/EnableMiddleware/;
 
 extends 'Catalyst';
@@ -19,8 +20,12 @@ __PACKAGE__->config(
       my $app = shift;
       return sub {
         my $env = shift;
-        $env->{myapp.customkey} = 'helloworld';
-        $app->($env);
+        if($env->{PATH_INFO} =~m/forced/) {
+          Plack::App::File->new(file=>TestApp->path_to(qw/share static forced.txt/))
+            ->call($env);
+        } else {
+          return $app->($env);
+        }
       },
     },
 
