@@ -168,7 +168,7 @@ doesn't preclude the other.
 
 =head1 CONFIGURATION
 
-Configuration for this plugin should be a hashref under the top level key
+Configuration for this plugin should be a ArrayRef under the top level key
 C<Plugin::EnableMiddleware>, as in the following:
 
     __PACKAGE__->config(
