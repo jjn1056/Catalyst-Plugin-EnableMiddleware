@@ -1,5 +1,14 @@
 Revision history for Catalyst-Plugin-EnableMiddleware
 
+0.005   06 April 2012
+        - fixed missing changelog
+        - adding debug output of loaded middleware
+        - don't try to installing middleware if theres none
+        - display loaded middlware if in debug mode
+
+0.004   06 April 2012
+        - fixed incorrect abstract in dist.ini
+
 0.003   06 April 2012
         - Fixed another documentation goof
         - Added more docs

@@ -4,22 +4,34 @@ use Moose::Role;
 use namespace::autoclean;
 use Plack::Util;
 use Scalar::Util;
+use Catalyst::Utils;
+use Text::SimpleTable;
 
-our $VERSION = '0.004';
+our $VERSION = '0.005';
 
 around 'psgi_app', sub {
   my ($orig, $self, @args) = @_;
-  my @mw = @{$self->config->{'Plugin::EnableMiddleware'}||[]};
   my $psgi_app = $self->$orig(@args);
+
+  return $psgi_app
+    unless $self->config->{'Plugin::EnableMiddleware'};
+
+  my $column_width = Catalyst::Utils::term_width() - 6;
+  my $t = Text::SimpleTable->new($column_width);
+
+  my @mw = @{$self->config->{'Plugin::EnableMiddleware'}||[]};
   while(my $next = shift(@mw)) {
     if(Scalar::Util::blessed $next && $next->can('wrap')) {
+      $t->row(ref $next);
       $psgi_app = $next->wrap($psgi_app);
     } elsif(my $type = ref $next) {
       if($type eq 'CODE') {
+      $t->row('CodeRef');
         $psgi_app = $next->($psgi_app);
       }
     } else {
       my $normalized_next = Plack::Util::load_class($next, 'Plack::Middleware');
+      $t->row($normalized_next);
       if($mw[0] and ref($mw[0]) and(ref $mw[0] eq 'HASH')) {
         my $args = shift @mw;
         $psgi_app = $normalized_next->wrap($psgi_app, %$args);
@@ -27,6 +39,9 @@ around 'psgi_app', sub {
         $psgi_app = $normalized_next->wrap($psgi_app);
       }
     }
+  }
+  if ($self->debug) {
+    $self->log->debug( "Loaded Plack Middleware:\n" . $t->draw . "\n" );
   }
   return $psgi_app;
 };
