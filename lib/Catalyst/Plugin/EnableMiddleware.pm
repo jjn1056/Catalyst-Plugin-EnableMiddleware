@@ -5,7 +5,7 @@ use namespace::autoclean;
 use Plack::Util;
 use Scalar::Util;
 
-our $VERSION = '0.001';
+our $VERSION = '0.003';
 
 around 'psgi_app', sub {
   my ($orig, $self, @args) = @_;
@@ -127,7 +127,7 @@ the above mapping could be re-written as follows:
     __PACKAGE__->config(
       'Plugin::EnableMiddleware', [
         'Debug',
-        'Session' => {'Session', store => 'File'},
+        'Session' => {store => 'File'},
       ]);
 
     __PACKAGE__->setup;
@@ -159,26 +159,68 @@ C<Plugin::EnableMiddleware>, as in the following:
     __PACKAGE__->config(
       'Plugin::EnableMiddleware', \@middleware);
 
-Where C<@middleware> is one of the following
+Where C<@middleware> is one of the following, applied in the order listed:
 
 =over4
 
 =item Middleware Object
 
 An already initialized object that conforms to the L<Plack::Middleware>
-specification
+specification:
+
+    my $stacktrace_middleware = Plack::Middleware::StackTrace->new;
+
+    __PACKAGE__->config(
+      'Plugin::EnableMiddleware', [
+        $stacktrace_middleware,
+      ]);
+
 
 =item coderef
 
-A coderef that is an inlined middleware
+A coderef that is an inlined middleware:
+
+    __PACKAGE__->config(
+      'Plugin::EnableMiddleware', [
+        sub {
+          my $app = shift;
+          return sub {
+            my $env = shift;
+            if($env->{PATH_INFO} =~m/forced/) {
+              Plack::App::File
+                ->new(file=>TestApp->path_to(qw/share static forced.txt/))
+                ->call($env);
+            } else {
+              return $app->($env);
+            }
+         },
+      },
+    ]);
+
+
 
 =item a scalar
 
 We assume the scalar refers to a namespace after normalizing it in the same way
 that L<Plack::Builder> does (it assumes we want something under the
-'Plack::Middleware' unless prefixed with a C<+>).  We initialize an object,
-first checking to see if the next value is a hashref, which is then used as
-initialization arguments.
+'Plack::Middleware' unless prefixed with a C<+>).
+
+    __PACKAGE__->config(
+      'Plugin::EnableMiddleware', [
+        'Debug',  ## 'Plack::Middleware::Debug->wrap(...)'
+        '+MyApp::Custom',  ## 'MyApp::Custom->wrap(...)'
+      ],
+    );
+
+=item a scalar followed by a hashref
+
+Just like the previous, except the following C<HashRef> is used as arguments
+to initialize the middleware object.
+
+    __PACKAGE__->config(
+      'Plugin::EnableMiddleware', [
+         'Session' => {store => 'File'},
+    ]);
 
 =cut
 
@@ -198,3 +240,4 @@ This library is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 
 =cut
+

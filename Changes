@@ -1,5 +1,10 @@
 Revision history for Catalyst-Plugin-EnableMiddleware
 
+0.003   06 April 2012
+        - Fixed another documentation goof
+        - Added more docs
+        - Fixed incorrect version in module
+
 0.002   06 April 2012
         - Fixed 'to much cut and paste' in the docs
 
