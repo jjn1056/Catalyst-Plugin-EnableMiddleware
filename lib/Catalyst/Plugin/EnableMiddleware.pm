@@ -5,7 +5,7 @@ use namespace::autoclean;
 use Plack::Util;
 use Scalar::Util;
 
-our $VERSION = '0.003';
+our $VERSION = '0.004';
 
 around 'psgi_app', sub {
   my ($orig, $self, @args) = @_;
@@ -159,7 +159,8 @@ C<Plugin::EnableMiddleware>, as in the following:
     __PACKAGE__->config(
       'Plugin::EnableMiddleware', \@middleware);
 
-Where C<@middleware> is one of the following, applied in the order listed:
+Where C<@middleware> is one or more of the following, applied in the order
+listed:
 
 =over4
 

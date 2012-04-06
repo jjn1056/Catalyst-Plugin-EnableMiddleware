@@ -78,7 +78,7 @@ However there may be cases when you'd rather enable middleware via you [Catalyst
 application, rather in a stand alone file.  For example, you may wish to let your
 [Catalyst](http://search.cpan.org/perldoc?Catalyst) application have control over the middleware configuration.
 
-This plugin lets you enable [Plack](http://search.cpan.org/perldoc?Plack) applications via configuration. For example,
+This plugin lets you enable [Plack](http://search.cpan.org/perldoc?Plack) middleware via configuration. For example,
 the above mapping could be re-written as follows:
 
     package MyApp::Web;
@@ -92,7 +92,7 @@ the above mapping could be re-written as follows:
     __PACKAGE__->config(
       'Plugin::EnableMiddleware', [
         'Debug',
-        'Session' => {'Session', store => 'File'},
+        'Session' => {store => 'File'},
       ]);
 
     __PACKAGE__->setup;
@@ -119,29 +119,75 @@ doesn't preclude the other.
 # CONFIGURATION
 
 Configuration for this plugin should be a hashref under the top level key
-`Plugin::URLMap`, as in the following:
+`Plugin::EnableMiddleware`, as in the following:
 
     __PACKAGE__->config(
       'Plugin::EnableMiddleware', \@middleware);
 
-Where `@middleware` is one of the following
+Where `@middleware` is one or more of the following, applied in the order
+listed:
 
 - Middleware Object
 
 An already initialized object that conforms to the [Plack::Middleware](http://search.cpan.org/perldoc?Plack::Middleware)
-specification
+specification:
+
+    my $stacktrace_middleware = Plack::Middleware::StackTrace->new;
+
+    __PACKAGE__->config(
+      'Plugin::EnableMiddleware', [
+        $stacktrace_middleware,
+      ]);
+
+
 
 - coderef
 
-A coderef that is an inlined middleware
+A coderef that is an inlined middleware:
+
+    __PACKAGE__->config(
+      'Plugin::EnableMiddleware', [
+        sub {
+          my $app = shift;
+          return sub {
+            my $env = shift;
+            if($env->{PATH_INFO} =~m/forced/) {
+              Plack::App::File
+                ->new(file=>TestApp->path_to(qw/share static forced.txt/))
+                ->call($env);
+            } else {
+              return $app->($env);
+            }
+         },
+      },
+    ]);
+
+
+
+
 
 - a scalar
 
 We assume the scalar refers to a namespace after normalizing it in the same way
 that [Plack::Builder](http://search.cpan.org/perldoc?Plack::Builder) does (it assumes we want something under the
-'Plack::Middleware' unless prefixed with a `+`).  We initialize an object,
-first checking to see if the next value is a hashref, which is then used as
-initialization arguments.
+'Plack::Middleware' unless prefixed with a `+`).
+
+    __PACKAGE__->config(
+      'Plugin::EnableMiddleware', [
+        'Debug',  ## 'Plack::Middleware::Debug->wrap(...)'
+        '+MyApp::Custom',  ## 'MyApp::Custom->wrap(...)'
+      ],
+    );
+
+- a scalar followed by a hashref
+
+Just like the previous, except the following `HashRef` is used as arguments
+to initialize the middleware object.
+
+    __PACKAGE__->config(
+      'Plugin::EnableMiddleware', [
+         'Session' => {store => 'File'},
+    ]);
 
 # AUTHOR
 
@@ -149,7 +195,7 @@ John Napiorkowski [email:jjnapiork@cpan.org](email:jjnapiork@cpan.org)
 
 # SEE ALSO
 
-[Plack](http://search.cpan.org/perldoc?Plack), [Plack::App::URLMap](http://search.cpan.org/perldoc?Plack::App::URLMap), [Catalyst](http://search.cpan.org/perldoc?Catalyst)
+[Plack](http://search.cpan.org/perldoc?Plack), [Plack::Middleware](http://search.cpan.org/perldoc?Plack::Middleware), [Catalyst](http://search.cpan.org/perldoc?Catalyst)
 
 # COPYRIGHT & LICENSE
 
