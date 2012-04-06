@@ -113,7 +113,7 @@ However there may be cases when you'd rather enable middleware via you L<Catalys
 application, rather in a stand alone file.  For example, you may wish to let your
 L<Catalyst> application have control over the middleware configuration.
 
-This plugin lets you enable L<Plack> applications via configuration. For example,
+This plugin lets you enable L<Plack> middleware via configuration. For example,
 the above mapping could be re-written as follows:
 
     package MyApp::Web;
@@ -154,7 +154,7 @@ doesn't preclude the other.
 =head1 CONFIGURATION
 
 Configuration for this plugin should be a hashref under the top level key
-C<Plugin::URLMap>, as in the following:
+C<Plugin::EnableMiddleware>, as in the following:
 
     __PACKAGE__->config(
       'Plugin::EnableMiddleware', \@middleware);
@@ -188,7 +188,7 @@ John Napiorkowski L<email:jjnapiork@cpan.org>
 
 =head1 SEE ALSO
 
-L<Plack>, L<Plack::App::URLMap>, L<Catalyst>
+L<Plack>, L<Plack::Middleware>, L<Catalyst>
 
 =head1 COPYRIGHT & LICENSE
 
