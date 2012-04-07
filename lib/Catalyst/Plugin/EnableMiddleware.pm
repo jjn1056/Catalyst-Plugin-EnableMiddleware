@@ -7,7 +7,7 @@ use Scalar::Util;
 use Catalyst::Utils;
 use Text::SimpleTable;
 
-our $VERSION = '0.005';
+our $VERSION = '0.006';
 
 around 'psgi_app', sub {
   my ($orig, $self, @args) = @_;
@@ -19,7 +19,7 @@ around 'psgi_app', sub {
   my $column_width = Catalyst::Utils::term_width() - 6;
   my $t = Text::SimpleTable->new($column_width);
 
-  my @mw = @{$self->config->{'Plugin::EnableMiddleware'}||[]};
+  my @mw = reverse @{$self->config->{'Plugin::EnableMiddleware'}||[]};
   while(my $next = shift(@mw)) {
     if(Scalar::Util::blessed $next && $next->can('wrap')) {
       $t->row(ref $next);
@@ -28,6 +28,10 @@ around 'psgi_app', sub {
       if($type eq 'CODE') {
       $t->row('CodeRef');
         $psgi_app = $next->($psgi_app);
+      } elsif($type eq 'HASH') {
+        my $module = Plack::Util::load_class(shift @mw, 'Plack::Middleware');
+       $t->row($module);
+        $psgi_app = $module->wrap($psgi_app, %$next);
       }
     } else {
       my $normalized_next = Plack::Util::load_class($next, 'Plack::Middleware');
