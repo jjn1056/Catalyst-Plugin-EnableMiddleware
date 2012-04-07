@@ -178,8 +178,8 @@ C<Plugin::EnableMiddleware>, as in the following:
     __PACKAGE__->config(
       'Plugin::EnableMiddleware', \@middleware);
 
-Where C<@middleware> is one or more of the following, applied in the order
-listed:
+Where C<@middleware> is one or more of the following, applied in the REVERSE of
+the order listed (to make it function similarly to L<Plack::Builder>:
 
 =over4
 
@@ -243,6 +243,13 @@ to initialize the middleware object.
     ]);
 
 =cut
+
+=head1 VERSION NOTES
+
+Versions prior to C<0.006> applied middleware in the order lists.  This led to
+unexpected problems when porting over middleware from L<Plack::Builder> since
+that applies middleware in reverse order.  This change makes this plugin behave
+as you might expect.
 
 =head1 AUTHOR
 

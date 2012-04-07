@@ -118,14 +118,14 @@ doesn't preclude the other.
 
 # CONFIGURATION
 
-Configuration for this plugin should be a hashref under the top level key
+Configuration for this plugin should be a ArrayRef under the top level key
 `Plugin::EnableMiddleware`, as in the following:
 
     __PACKAGE__->config(
       'Plugin::EnableMiddleware', \@middleware);
 
-Where `@middleware` is one or more of the following, applied in the order
-listed:
+Where `@middleware` is one or more of the following, applied in the REVERSE of
+the order listed (to make it function similarly to [Plack::Builder](http://search.cpan.org/perldoc?Plack::Builder):
 
 - Middleware Object
 
@@ -188,6 +188,13 @@ to initialize the middleware object.
       'Plugin::EnableMiddleware', [
          'Session' => {store => 'File'},
     ]);
+
+# VERSION NOTES
+
+Versions prior to `0.006` applied middleware in the order lists.  This led to
+unexpected problems when porting over middleware from [Plack::Builder](http://search.cpan.org/perldoc?Plack::Builder) since
+that applies middleware in reverse order.  This change makes this plugin behave
+as you might expect.
 
 # AUTHOR
 
